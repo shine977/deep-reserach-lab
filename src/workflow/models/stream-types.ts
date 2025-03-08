@@ -1,6 +1,6 @@
 /**
  * Stream Types
- * 
+ *
  * This file contains type definitions for the workflow stream.
  */
 

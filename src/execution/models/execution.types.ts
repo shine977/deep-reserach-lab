@@ -1,56 +1,56 @@
 /**
  * Execution Types
- * 
+ *
  * This file defines the core types and interfaces for the execution module,
  * which manages workflow execution instances and their lifecycle.
  */
 
-import { Workflow, WorkflowResult } from '../../core/types/workflow.types';
+import { Workflow, WorkflowResult } from "../../core/types/workflow.types";
 
 /**
  * Execution status enum
  */
 export enum ExecutionStatus {
-  PENDING = 'pending',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELED = 'canceled',
-  PAUSED = 'paused'
+  PENDING = "pending",
+  RUNNING = "running",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  CANCELED = "canceled",
+  PAUSED = "paused",
 }
 
 /**
  * Execution type enum
  */
 export enum ExecutionType {
-  MANUAL = 'manual',
-  SCHEDULED = 'scheduled',
-  TRIGGERED = 'triggered',
-  SYSTEM = 'system'
+  MANUAL = "manual",
+  SCHEDULED = "scheduled",
+  TRIGGERED = "triggered",
+  SYSTEM = "system",
 }
 
 /**
  * Branch status enum
  */
 export enum BranchStatus {
-  PENDING = 'pending',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELED = 'canceled',
-  PAUSED = 'paused'
+  PENDING = "pending",
+  RUNNING = "running",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  CANCELED = "canceled",
+  PAUSED = "paused",
 }
 
 /**
  * Branch event type enum
  */
 export enum BranchEventType {
-  BRANCH_STARTED = 'branch:start',
-  BRANCH_COMPLETED = 'branch:complete',
-  BRANCH_FAILED = 'branch:failed',
-  BRANCH_CANCELED = 'branch:canceled',
-  BRANCH_PAUSED = 'branch:paused',
-  BRANCH_RESUMED = 'branch:resumed'
+  BRANCH_STARTED = "branch:start",
+  BRANCH_COMPLETED = "branch:complete",
+  BRANCH_FAILED = "branch:failed",
+  BRANCH_CANCELED = "branch:canceled",
+  BRANCH_PAUSED = "branch:paused",
+  BRANCH_RESUMED = "branch:resumed",
 }
 
 /**
@@ -62,32 +62,32 @@ export interface ExecutionRecord {
   id: string;
   workflowId: string;
   workflowVersion?: string;
-  
+
   // Status and timing
   status: ExecutionStatus;
   type: ExecutionType;
   createdAt: Date;
   startedAt?: Date;
   finishedAt?: Date;
-  
+
   // Input/Output
   input: any;
   result?: any;
   error?: Error | string;
-  
+
   // Resource usage
   tokenUsage?: {
     input: number;
     output: number;
     total: number;
   };
-  
+
   // Execution metadata
   userId?: string;
   tags?: string[];
   priority?: number;
   metadata?: Record<string, any>;
-  
+
   // Branch information
   branches?: ExecutionBranch[];
 }
@@ -103,24 +103,24 @@ export interface ExecutionBranch {
   parentBranchId?: string;
   name: string;
   description?: string;
-  
+
   // Status and timing
   status: BranchStatus;
   createdAt: Date;
   startedAt?: Date;
   finishedAt?: Date;
-  
+
   // Branch content
   nodeIds: string[];
   currentNodeId?: string;
   completedNodeIds: string[];
-  
+
   // Branch data
   input?: any;
   intermediateResults?: any[];
   result?: any;
   error?: Error | string;
-  
+
   // Branch metadata
   priority?: number;
   tags?: string[];
@@ -230,8 +230,8 @@ export interface ExecutionFilter {
   tags?: string[];
   limit?: number;
   offset?: number;
-  sortBy?: 'createdAt' | 'startedAt' | 'finishedAt' | 'priority';
-  sortDirection?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "startedAt" | "finishedAt" | "priority";
+  sortDirection?: "asc" | "desc";
   hasBranches?: boolean;
 }
 
@@ -246,8 +246,13 @@ export interface BranchFilter {
   minRelevanceScore?: number;
   limit?: number;
   offset?: number;
-  sortBy?: 'createdAt' | 'startedAt' | 'finishedAt' | 'priority' | 'relevanceScore';
-  sortDirection?: 'asc' | 'desc';
+  sortBy?:
+    | "createdAt"
+    | "startedAt"
+    | "finishedAt"
+    | "priority"
+    | "relevanceScore";
+  sortDirection?: "asc" | "desc";
 }
 
 /**
@@ -261,12 +266,15 @@ export interface ExecutionMetrics {
     output: number;
     total: number;
   };
-  nodeMetrics: Record<string, {
-    duration: number;
-    tokenUsage: number;
-    startTime: Date;
-    endTime?: Date;
-  }>;
+  nodeMetrics: Record<
+    string,
+    {
+      duration: number;
+      tokenUsage: number;
+      startTime: Date;
+      endTime?: Date;
+    }
+  >;
   totalNodes: number;
   completedNodes: number;
   failedNodes: number;
@@ -274,13 +282,16 @@ export interface ExecutionMetrics {
   completedBranches?: number;
   failedBranches?: number;
   canceledBranches?: number;
-  branchMetrics?: Record<string, {
-    branchId: string;
-    name: string;
-    duration: number;
-    tokenUsage: number;
-    relevanceScore?: number;
-    completedNodes: number;
-    totalNodes: number;
-  }>;
+  branchMetrics?: Record<
+    string,
+    {
+      branchId: string;
+      name: string;
+      duration: number;
+      tokenUsage: number;
+      relevanceScore?: number;
+      completedNodes: number;
+      totalNodes: number;
+    }
+  >;
 }

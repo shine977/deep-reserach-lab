@@ -81,7 +81,7 @@ export class ExecutionService {
     private workflowExecutor: WorkflowExecutor,
     private streamService: WorkflowStreamService,
     private storageService: ExecutionStorageService,
-    private monitorService: ExecutionMonitorService
+    private monitorService: ExecutionMonitorService,
   ) {}
 
   /**
@@ -91,7 +91,7 @@ export class ExecutionService {
     const execData = this.activeExecutions.get(id);
     if (!execData) {
       return throwError(
-        () => new Error(`Execution ${id} not found or not active`)
+        () => new Error(`Execution ${id} not found or not active`),
       );
     }
 
@@ -105,7 +105,7 @@ export class ExecutionService {
     const execData = this.activeExecutions.get(id);
     if (!execData) {
       return throwError(
-        () => new Error(`Execution ${id} not found or not active`)
+        () => new Error(`Execution ${id} not found or not active`),
       );
     }
 
@@ -136,7 +136,7 @@ export class ExecutionService {
             return false;
           }
           const intersection = record.tags.filter((tag) =>
-            filter.tags.includes(tag)
+            filter.tags.includes(tag),
           );
           if (intersection.length === 0) {
             return false;
@@ -212,7 +212,7 @@ export class ExecutionService {
   private emitExecutionEvent(
     executionId: string,
     type: string,
-    data?: any
+    data?: any,
   ): void {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) return;
@@ -233,7 +233,7 @@ export class ExecutionService {
   executeWorkflow(
     workflow: Workflow,
     input: any,
-    options: ExecutionOptions = {}
+    options: ExecutionOptions = {},
   ): Observable<ExecutionRecord> {
     // Generate execution ID
     const executionId = uuidv4();
@@ -309,7 +309,7 @@ export class ExecutionService {
     const stream$ = this.streamService.createStream(
       workflow,
       input,
-      execOptions
+      execOptions,
     );
 
     // Monitor the stream for events
@@ -401,7 +401,7 @@ export class ExecutionService {
         this.storageService
           .updateExecution(record)
           .catch((err) =>
-            console.error("Failed to update execution record:", err)
+            console.error("Failed to update execution record:", err),
           );
 
         // Collect execution metrics
@@ -412,7 +412,7 @@ export class ExecutionService {
             this.storageService
               .updateExecution(record)
               .catch((err) =>
-                console.error("Failed to update execution metrics:", err)
+                console.error("Failed to update execution metrics:", err),
               );
           })
           .catch((err) => console.error("Failed to collect metrics:", err));
@@ -425,7 +425,7 @@ export class ExecutionService {
       map(() => record),
 
       // Share replay to allow multiple subscribers
-      shareReplay(1)
+      shareReplay(1),
     );
   }
 
@@ -434,7 +434,7 @@ export class ExecutionService {
    */
   private handleBranchEvent(event: StreamEvent): void {
     const executionId = event.executionId;
-   
+
     const execData = this.activeExecutions.get(executionId);
 
     if (!execData) return;
@@ -454,7 +454,7 @@ export class ExecutionService {
             priority: event.data?.priority,
             metadata: event.data?.metadata,
           },
-          branchId
+          branchId,
         );
         break;
 
@@ -468,7 +468,7 @@ export class ExecutionService {
           this.storageService
             .updateBranch(branch)
             .catch((err) =>
-              console.error(`Failed to update branch ${branchId}:`, err)
+              console.error(`Failed to update branch ${branchId}:`, err),
             );
 
           // Emit branch event
@@ -495,7 +495,7 @@ export class ExecutionService {
           this.storageService
             .updateBranch(branch)
             .catch((err) =>
-              console.error(`Failed to update branch ${branchId}:`, err)
+              console.error(`Failed to update branch ${branchId}:`, err),
             );
 
           // Emit branch event
@@ -525,7 +525,7 @@ export class ExecutionService {
           this.storageService
             .updateBranch(branch)
             .catch((err) =>
-              console.error(`Failed to update branch ${branchId}:`, err)
+              console.error(`Failed to update branch ${branchId}:`, err),
             );
 
           // Emit branch event
@@ -549,7 +549,7 @@ export class ExecutionService {
 
   /**
    * Update execution progress based on stream events
-   * 
+   *
    * This method processes workflow events and updates the execution progress tracking:
    * - Tracks node completion status and updates progress percentage
    * - Updates execution status based on event types
@@ -559,49 +559,51 @@ export class ExecutionService {
   private updateProgressFromEvent(
     progress: ExecutionProgress,
     event: StreamEvent,
-    workflow: Workflow
+    workflow: Workflow,
   ): void {
     // Handle node completion
-    if (event.type === 'node:complete' && event.nodeId) {
+    if (event.type === "node:complete" && event.nodeId) {
       // Add to completed nodes if not already there
       if (!progress.completedNodes.includes(event.nodeId)) {
         progress.completedNodes.push(event.nodeId);
       }
-      
+
       // Remove from pending nodes
       const pendingIndex = progress.pendingNodes.indexOf(event.nodeId);
       if (pendingIndex >= 0) {
         progress.pendingNodes.splice(pendingIndex, 1);
       }
-      
+
       // Clear current node
       progress.currentNodeId = undefined;
-      
+
       // Calculate progress percentage
       progress.progress = Math.round(
-        (progress.completedNodes.length / workflow.nodes.length) * 100
+        (progress.completedNodes.length / workflow.nodes.length) * 100,
       );
     }
-    
+
     // Handle node start
-    if (event.type === 'node:start' && event.nodeId) {
+    if (event.type === "node:start" && event.nodeId) {
       progress.currentNodeId = event.nodeId;
-      
+
       // Ensure node is in pending nodes list if not completed
-      if (!progress.completedNodes.includes(event.nodeId) && 
-          !progress.pendingNodes.includes(event.nodeId)) {
+      if (
+        !progress.completedNodes.includes(event.nodeId) &&
+        !progress.pendingNodes.includes(event.nodeId)
+      ) {
         progress.pendingNodes.push(event.nodeId);
       }
     }
-    
+
     // Update execution status based on event types
-    if (event.type === 'execution:complete') {
+    if (event.type === "execution:complete") {
       progress.status = ExecutionStatus.COMPLETED;
-    } else if (event.type === 'execution:failed') {
+    } else if (event.type === "execution:failed") {
       progress.status = ExecutionStatus.FAILED;
-    } else if (event.type === 'execution:canceled') {
+    } else if (event.type === "execution:canceled") {
       progress.status = ExecutionStatus.CANCELED;
-    } else if (event.type === 'execution:paused') {
+    } else if (event.type === "execution:paused") {
       progress.status = ExecutionStatus.PAUSED;
     } else if (progress.status === ExecutionStatus.PENDING) {
       progress.status = ExecutionStatus.RUNNING;
@@ -615,12 +617,12 @@ export class ExecutionService {
     executionId: string,
     options: BranchOptions,
     branchId: string = uuidv4(),
-    parentBranchId?: string
+    parentBranchId?: string,
   ): Observable<ExecutionBranch> {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) {
       return throwError(
-        () => new Error(`Execution ${executionId} not found or not active`)
+        () => new Error(`Execution ${executionId} not found or not active`),
       );
     }
 
@@ -699,7 +701,7 @@ export class ExecutionService {
         this.storageService
           .updateBranch(branch)
           .catch((err) =>
-            console.error(`Failed to update branch ${branch.id}:`, err)
+            console.error(`Failed to update branch ${branch.id}:`, err),
           );
 
         // Emit branch event
@@ -765,7 +767,7 @@ export class ExecutionService {
   private emitBranchEvent(
     branchId: string,
     type: BranchEventType,
-    data?: any
+    data?: any,
   ): void {
     const execData = this.activeExecutions.get(data.executionId);
     if (!execData) return;
@@ -789,7 +791,7 @@ export class ExecutionService {
    */
   cancelBranches(
     executionId: string,
-    branchIds: string[]
+    branchIds: string[],
   ): Promise<{
     success: boolean;
     canceledBranches: string[];
@@ -808,7 +810,7 @@ export class ExecutionService {
       this.cancelBranch(executionId, branchId).then((success) => ({
         branchId,
         success,
-      }))
+      })),
     );
 
     return Promise.all(results).then((results) => {
@@ -832,7 +834,7 @@ export class ExecutionService {
    */
   getBranch(
     executionId: string,
-    branchId: string
+    branchId: string,
   ): Promise<ExecutionBranch | null> {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) {
@@ -854,12 +856,12 @@ export class ExecutionService {
    */
   getBranchProgress(
     executionId: string,
-    branchId: string
+    branchId: string,
   ): Observable<BranchProgress> {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) {
       return throwError(
-        () => new Error(`Execution ${executionId} not found or not active`)
+        () => new Error(`Execution ${executionId} not found or not active`),
       );
     }
 
@@ -867,7 +869,9 @@ export class ExecutionService {
     if (!branchData) {
       return throwError(
         () =>
-          new Error(`Branch ${branchId} not found for execution ${executionId}`)
+          new Error(
+            `Branch ${branchId} not found for execution ${executionId}`,
+          ),
       );
     }
 
@@ -879,12 +883,12 @@ export class ExecutionService {
    */
   getBranchEvents(
     executionId: string,
-    branchId: string
+    branchId: string,
   ): Observable<BranchEvent> {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) {
       return throwError(
-        () => new Error(`Execution ${executionId} not found or not active`)
+        () => new Error(`Execution ${executionId} not found or not active`),
       );
     }
 
@@ -892,7 +896,9 @@ export class ExecutionService {
     if (!branchData) {
       return throwError(
         () =>
-          new Error(`Branch ${branchId} not found for execution ${executionId}`)
+          new Error(
+            `Branch ${branchId} not found for execution ${executionId}`,
+          ),
       );
     }
 
@@ -907,7 +913,7 @@ export class ExecutionService {
     filter?: {
       status?: BranchStatus[];
       relevanceThreshold?: number;
-    }
+    },
   ): Promise<ExecutionBranch[]> {
     const execData = this.activeExecutions.get(executionId);
 
@@ -915,7 +921,7 @@ export class ExecutionService {
     if (execData) {
       // Get branches from active execution
       const activeBranches = Array.from(execData.branches.values()).map(
-        (data) => data.branch
+        (data) => data.branch,
       );
 
       return Promise.resolve(activeBranches).then((branches) => {
@@ -924,7 +930,7 @@ export class ExecutionService {
 
         if (filter?.status && filter.status.length > 0) {
           filteredBranches = filteredBranches.filter((branch) =>
-            filter.status!.includes(branch.status)
+            filter.status!.includes(branch.status),
           );
         }
 
@@ -932,7 +938,7 @@ export class ExecutionService {
           filteredBranches = filteredBranches.filter(
             (branch) =>
               branch.relevanceScore !== undefined &&
-              branch.relevanceScore >= filter.relevanceThreshold!
+              branch.relevanceScore >= filter.relevanceThreshold!,
           );
         }
 
@@ -941,6 +947,6 @@ export class ExecutionService {
     }
 
     // For inactive executions, just use storage
-    return this.storageService.listBranches( filter);
+    return this.storageService.listBranches(filter);
   }
 }

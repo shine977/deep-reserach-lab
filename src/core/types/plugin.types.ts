@@ -1,11 +1,11 @@
 /**
  * Plugin System Type Definitions
- * 
+ *
  * This file contains the core type definitions for the plugin system.
  * It defines interfaces for plugins, plugin context, and related types.
  */
 
-import { Observable } from 'rxjs';
+import { Observable } from "rxjs";
 
 // Plugin metadata
 export interface PluginMetadata {
@@ -56,7 +56,7 @@ export interface Plugin {
   name: string;
   version: string;
   description: string;
-  
+
   // Lifecycle methods
   initialize(context: PluginContext): Promise<void>;
   activate(): Promise<void>;
@@ -67,12 +67,12 @@ export interface Plugin {
 export interface NodePlugin extends Plugin {
   // Node type
   nodeType: string;
-  
+
   // Schema definitions
   inputSchema: JSONSchema;
   outputSchema: JSONSchema;
   configSchema: JSONSchema;
-  
+
   // Process method
   process(input: any, config: any, context: ExecutionContext): Observable<any>;
 }

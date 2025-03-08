@@ -75,7 +75,7 @@ export class WorkflowCompiler {
    */
   private createOperatorChain(
     workflow: Workflow,
-    nodeOrder: string[]
+    nodeOrder: string[],
   ): OperatorFunction<any, any> {
     return (input$) => {
       let chain$ = input$;
@@ -87,8 +87,11 @@ export class WorkflowCompiler {
 
         const nodePlugin = this.pluginRegistry.getNodePlugin(node.type);
         if (!nodePlugin) {
-          return throwError(
-            () => this.logger.error(`Plugin for node type "${node.type}" not found`, `nodeId:${nodeId}`)
+          return throwError(() =>
+            this.logger.error(
+              `Plugin for node type "${node.type}" not found`,
+              `nodeId:${nodeId}`,
+            ),
           );
         }
 
@@ -112,7 +115,7 @@ export class WorkflowCompiler {
               console.error(`Error processing node ${nodeId}:`, error);
               return throwError(() => error);
             }
-          })
+          }),
         );
       }
 

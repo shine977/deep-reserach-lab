@@ -1,6 +1,6 @@
 /**
  * Workflow Type Definitions
- * 
+ *
  * This file contains the type definitions for the workflow system.
  * It defines interfaces for workflow nodes, connections, and related types.
  */
@@ -18,7 +18,7 @@ export interface Connection {
   from: string;
   to: string;
   fromOutput?: string; // default: 'default'
-  toInput?: string;    // default: 'default'
+  toInput?: string; // default: 'default'
 }
 
 // Workflow definition
@@ -37,7 +37,7 @@ export interface WorkflowValidationResult {
 }
 
 // Workflow execution status
-export type WorkflowStatus = 'pending' | 'running' | 'completed' | 'failed';
+export type WorkflowStatus = "pending" | "running" | "completed" | "failed";
 
 // Workflow execution result
 export interface WorkflowResult {
