@@ -16,7 +16,9 @@ import {
   BranchStatus,
 } from "../models/execution.types";
 import { Workflow } from "../../core/types/workflow.types";
+import { Injectable } from "@deep-research-lab/core/di";
 
+@Injectable()
 export class ExecutionMonitorService {
   // Track active execution subscriptions
   private executionSubscriptions: Map<string, Subscription> = new Map();

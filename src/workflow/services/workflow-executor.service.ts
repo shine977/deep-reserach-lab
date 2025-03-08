@@ -13,7 +13,9 @@ import {
 } from "../../core/types/workflow.types";
 import { WorkflowCompiler } from "./workflow-compiler.service";
 import { v4 as uuidv4 } from "uuid";
+import { Injectable } from "@deep-research-lab/core/di";
 
+@Injectable()
 export class WorkflowExecutor {
   private executionStates: Map<string, WorkflowExecutionState> = new Map();
 
@@ -25,7 +27,7 @@ export class WorkflowExecutor {
   execute(workflow: Workflow, initialInput: any): Observable<WorkflowResult> {
     // Generate execution ID
     const executionId = uuidv4();
-
+    const mainBranchId = uuidv4();
     // Create execution state
     const state: WorkflowExecutionState = {
       id: executionId,
@@ -45,7 +47,10 @@ export class WorkflowExecutor {
 
     // Compile the workflow
     try {
-      const executableWorkflow = this.compiler.compile(workflow);
+      const executableWorkflow = this.compiler.compile(workflow, {
+        executionId,
+        branchId: mainBranchId,
+      });
 
       // Create initial observable
       return of(initialInput).pipe(

@@ -12,8 +12,14 @@ import {
   ExecutionContext,
   JSONSchema,
 } from "../../core/types/plugin.types";
+import { Inject, Injectable } from "@deep-research-lab/core/di";
+import { ApplicationLogger } from "@deep-research-lab/shared";
+import { ExecutionService } from "@deep-research-lab/execution";
 
+@Injectable()
 export class EndPlugin implements NodePlugin {
+  logger = new ApplicationLogger(EndPlugin.name);
+
   // Plugin metadata
   id = "end-plugin";
   name = "Workflow End";
@@ -46,12 +52,15 @@ export class EndPlugin implements NodePlugin {
       },
     },
   };
-
+  constructor(
+    @Inject()
+    private executionService: ExecutionService,
+  ) {}
   /**
    * Initialize the plugin
    */
   async initialize(context: PluginContext): Promise<void> {
-    context.logger.info("End plugin initialized");
+    this.logger.info("End plugin initialized");
   }
 
   /**
@@ -77,14 +86,29 @@ export class EndPlugin implements NodePlugin {
     config: { addTimestamp?: boolean } = {},
     context: ExecutionContext,
   ): Observable<any> {
-    context.logger.info(`Workflow end reached: ${context.nodeId}`);
-
-    const result = {
+    this.logger.info(`Workflow end reached: ${context.nodeId}`);
+    this.logger.info(
+      `process method execute: ${context.executionId}:${context.branchId}`,
+    );
+    // complete the branch
+    if (context.executionId && context.branchId) {
+      this.logger.info(
+        `Completing branch: ${context.branchId} for execution: ${context.executionId}`,
+      );
+      this.executionService.emitExecutionEvent(
+        context.executionId,
+        "branch:complete",
+        { branchId: context.branchId, result: input },
+      );
+    } else {
+      this.logger.warn(
+        `Cannot complete branch: executionId or branchId is missing.`,
+      );
+    }
+    return of({
       completed: true,
       result: input,
       ...(config.addTimestamp ? { timestamp: new Date().toISOString() } : {}),
-    };
-
-    return of(result);
+    });
   }
 }

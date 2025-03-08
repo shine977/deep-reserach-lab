@@ -6,29 +6,47 @@
  */
 
 import { OperatorFunction, Observable, of, throwError, concatMap } from "rxjs";
-import { Workflow, ExecutableWorkflow } from "../../core/types/workflow.types";
-import { NodePlugin, ExecutionContext } from "../../core/types/plugin.types";
-import { PluginRegistry } from "../../plugin-system/services/plugin-registry.service";
-import { ApplicationLogger } from "../../shared";
+import {
+  Workflow,
+  ExecutableWorkflow,
+  NodePlugin,
+  ExecutionContext,
+  WorkflowCompileOptions,
+} from "@deep-research-lab/core";
+import { PluginRegistry } from "@deep-research-lab/plugin-system";
+import { ApplicationLogger, appLogger } from "@deep-research-lab/shared";
+import { Injectable } from "@deep-research-lab/core/di";
 
+@Injectable()
 export class WorkflowCompiler {
   logger = new ApplicationLogger(WorkflowCompiler.name);
   constructor(private pluginRegistry: PluginRegistry) {}
 
   /**
    * Compile a workflow into an executable form
+   * @param workflow The workflow to compile
+   * @param options Optional compilation options including executionId and branchId
    */
-  compile(workflow: Workflow): ExecutableWorkflow {
+  compile(
+    workflow: Workflow,
+    options?: WorkflowCompileOptions,
+  ): ExecutableWorkflow {
     // Determine execution order (topological sort)
     const nodeOrder = this.determineNodeOrder(workflow);
 
-    // Create the operator chain
-    const operatorChain = this.createOperatorChain(workflow, nodeOrder);
+    // Create operator chain for execution
+    const operatorChain = this.createOperatorChain(
+      workflow,
+      nodeOrder,
+      options,
+    );
 
+    // Return executable workflow
     return {
       original: workflow,
       operatorChain,
       nodeOrder,
+      ...(options || {}), // Include any passed options in the result
     };
   }
 
@@ -76,6 +94,7 @@ export class WorkflowCompiler {
   private createOperatorChain(
     workflow: Workflow,
     nodeOrder: string[],
+    options?: WorkflowCompileOptions,
   ): OperatorFunction<any, any> {
     return (input$) => {
       let chain$ = input$;
@@ -97,11 +116,18 @@ export class WorkflowCompiler {
 
         chain$ = chain$.pipe(
           concatMap((input) => {
+            // Extract branchId from input if available (for branching workflows)
+            const branchId =
+              input && typeof input === "object" && input.branchId
+                ? input.branchId
+                : (options && options.branchId) || `branch-${Date.now()}`;
             // Create execution context
             const context: ExecutionContext = {
               nodeId,
-              executionId: "execution-" + Date.now(),
-              logger: console,
+              executionId:
+                (options && options.executionId) || "execution-" + Date.now(),
+              logger: appLogger,
+              branchId: branchId,
               services: {
                 getService: (serviceId: string) => undefined,
               },

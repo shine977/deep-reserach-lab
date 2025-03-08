@@ -5,6 +5,7 @@
  * providing methods to save, retrieve, and query execution history.
  */
 
+import { Injectable } from "@deep-research-lab/core/di";
 import {
   ExecutionRecord,
   ExecutionFilter,
@@ -14,6 +15,7 @@ import {
   BranchFilter,
 } from "../models/execution.types";
 
+@Injectable()
 export class ExecutionStorageService {
   // In-memory storage for the MVP
   private executionRecords: Map<string, ExecutionRecord> = new Map();

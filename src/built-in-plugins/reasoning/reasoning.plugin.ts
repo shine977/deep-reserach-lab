@@ -13,6 +13,7 @@ import {
   JSONSchema,
 } from "../../core/types/plugin.types";
 import axios from "axios";
+import { Injectable } from "@deep-research-lab/core/di";
 
 export interface ReasoningResult {
   reasoning: string;
@@ -21,6 +22,7 @@ export interface ReasoningResult {
   nextAction?: string;
 }
 
+@Injectable()
 export class ReasoningPlugin implements NodePlugin {
   // Plugin metadata
   id = "reasoning-plugin";

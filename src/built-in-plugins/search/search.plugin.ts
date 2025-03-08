@@ -13,6 +13,7 @@ import {
   JSONSchema,
 } from "../../core/types/plugin.types";
 import axios from "axios";
+import { Injectable } from "@deep-research-lab/core/di";
 
 export interface SearchResult {
   url: string;
@@ -20,6 +21,7 @@ export interface SearchResult {
   snippet: string;
 }
 
+@Injectable()
 export class SearchPlugin implements NodePlugin {
   // Plugin metadata
   id = "search-plugin";

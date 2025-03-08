@@ -13,6 +13,7 @@ import {
   JSONSchema,
 } from "../../core/types/plugin.types";
 import axios from "axios";
+import { Injectable } from "@deep-research-lab/core/di";
 
 export interface ContentItem {
   url: string;
@@ -27,6 +28,7 @@ interface SearchResult {
   snippet: string;
 }
 
+@Injectable()
 export class WebReaderPlugin implements NodePlugin {
   // Plugin metadata
   id = "web-reader-plugin";

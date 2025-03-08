@@ -5,6 +5,7 @@
  * It defines interfaces for plugins, plugin context, and related types.
  */
 
+import { ApplicationLogger } from "@deep-research-lab/shared";
 import { Observable } from "rxjs";
 
 // Plugin metadata
@@ -17,18 +18,9 @@ export interface PluginMetadata {
 
 // Plugin context - provided to plugins during execution
 export interface PluginContext {
-  logger: Logger;
+  logger: ApplicationLogger;
   services: ServiceRegistry;
 }
-
-// Simple logger interface
-export interface Logger {
-  info(message: string, ...args: any[]): void;
-  error(message: string, ...args: any[]): void;
-  warn(message: string, ...args: any[]): void;
-  debug(message: string, ...args: any[]): void;
-}
-
 // Service registry interface
 export interface ServiceRegistry {
   getService<T>(serviceId: string): T | undefined;
@@ -38,6 +30,7 @@ export interface ServiceRegistry {
 export interface ExecutionContext extends PluginContext {
   nodeId: string;
   executionId: string;
+  branchId?: string;
 }
 
 // JSON Schema type (simplified)

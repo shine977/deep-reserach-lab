@@ -12,6 +12,7 @@ import {
   ExecutionContext,
   JSONSchema,
 } from "../../core/types/plugin.types";
+import { Injectable } from "@deep-research-lab/core/di";
 
 export interface TokenUsage {
   total: number;
@@ -20,6 +21,7 @@ export interface TokenUsage {
   details: Record<string, number>;
 }
 
+@Injectable()
 export class TokenBudgetPlugin implements NodePlugin {
   // Plugin metadata
   id = "token-budget-plugin";

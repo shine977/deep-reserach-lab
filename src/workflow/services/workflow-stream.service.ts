@@ -37,7 +37,9 @@ import {
   withTimeout,
   trackTokens,
 } from "../utils/rxjs-operators";
+import { Injectable } from "@deep-research-lab/core/di";
 
+@Injectable()
 export class WorkflowStreamService {
   // Event subject for workflow events
   private workflowEvents = new Subject<StreamEvent>();

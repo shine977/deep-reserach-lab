@@ -5,12 +5,14 @@
  * It maintains a registry of all available plugins and provides methods to access them.
  */
 
+import { Injectable } from "@deep-research-lab/core/di";
 import {
   Plugin,
   NodePlugin,
   ValidationResult,
 } from "../../core/types/plugin.types";
 
+@Injectable()
 export class PluginRegistry {
   private plugins: Map<string, Plugin> = new Map();
   private nodePlugins: Map<string, NodePlugin> = new Map();

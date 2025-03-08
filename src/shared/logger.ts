@@ -13,6 +13,8 @@ const colors = {
   gray: "\x1b[90m",
 };
 
+type ComplexMessage = string | undefined | unknown;
+
 /**
  * Custom application logger with colored terminal output
  * Independent implementation without NestJS dependency
@@ -20,13 +22,13 @@ const colors = {
 
 const PREFIX = "[DeepRearchLab]";
 export class ApplicationLogger {
-  private context?: string;
+  private context?: ComplexMessage;
 
-  constructor(context?: string) {
+  constructor(context?: ComplexMessage) {
     this.context = context;
   }
 
-  error(message: string, context?: string): void {
+  error(message: ComplexMessage, context?: ComplexMessage): void {
     const contextToUse = context || this.context;
     const timestamp = new Date().toLocaleString();
     console.error(
@@ -36,7 +38,7 @@ export class ApplicationLogger {
     );
   }
 
-  log(message: string, context?: string): void {
+  log(message: ComplexMessage, context?: ComplexMessage): void {
     const contextToUse = context || this.context;
     const timestamp = new Date().toLocaleString();
     console.log(
@@ -46,7 +48,7 @@ export class ApplicationLogger {
     );
   }
 
-  warn(message: string, context?: string): void {
+  warn(message: ComplexMessage, context?: ComplexMessage): void {
     const contextToUse = context || this.context;
     const timestamp = new Date().toLocaleString();
     console.warn(
@@ -56,17 +58,17 @@ export class ApplicationLogger {
     );
   }
 
-  debug(message: string, context?: string): void {
+  debug(message: ComplexMessage, context?: ComplexMessage): void {
     const contextToUse = context || this.context;
     const timestamp = new Date().toLocaleString();
     console.debug(
-      `${colors.blue}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   ${colors.blue}DEBUG${colors.reset} ${
+      `${colors.magenta}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   ${colors.magenta}DEBUG${colors.reset} ${
         contextToUse ? `${colors.yellow}[${contextToUse}]${colors.reset} ` : ""
       }${message}`,
     );
   }
 
-  verbose(message: string, context?: string): void {
+  verbose(message: ComplexMessage, context?: ComplexMessage): void {
     const contextToUse = context || this.context;
     const timestamp = new Date().toLocaleString();
     console.log(
@@ -75,4 +77,12 @@ export class ApplicationLogger {
       }${message}`,
     );
   }
+  info(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
+    console.info(
+      `${colors.blue}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}${contextToUse ? `${colors.yellow}[${contextToUse}]${colors.reset} ` : ""}${colors.blue}${message}${colors.reset}`,
+    );
+  }
 }
+export const appLogger = new ApplicationLogger();

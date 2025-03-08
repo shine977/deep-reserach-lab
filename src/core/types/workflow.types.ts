@@ -46,11 +46,21 @@ export interface WorkflowResult {
   error?: Error;
 }
 
+// Workflow compile options
+export interface WorkflowCompileOptions {
+  executionId?: string;
+  branchId?: string;
+  [key: string]: any; // Allow additional properties for extensibility
+}
+
 // Executable workflow (result of compilation)
 export interface ExecutableWorkflow {
   original: Workflow;
   operatorChain: any; // RxJS operator chain
   nodeOrder: string[];
+  executionId?: string;
+  branchId?: string;
+  [key: string]: any; // Allow additional properties for extensibility
 }
 
 // Workflow execution state

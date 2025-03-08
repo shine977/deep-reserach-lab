@@ -23,9 +23,12 @@ import { ReasoningPlugin } from "../built-in-plugins/reasoning/reasoning.plugin"
 import { TokenBudgetPlugin } from "../built-in-plugins/token-budget/token-budget.plugin";
 import { Workflow } from "../core/types/workflow.types";
 import { ExecutionService } from "../execution/services/execution.service";
-import { v4 as uuidv4 } from "uuid";
 import { BranchStatus } from "../execution/models/execution.types";
-import { EndPlugin } from "@deep-research-lab/built-in-plugins";
+import { EndPlugin, ProcessPlugin } from "@deep-research-lab/built-in-plugins";
+import { ApplicationLogger } from "@deep-research-lab/shared";
+import { BranchPlugin } from "@/built-in-plugins/branch/branch.plugin";
+import { StartPlugin } from "@/built-in-plugins/start/start.plugin";
+import { DI } from "@deep-research-lab/core/di";
 
 /**
  * Run the execution example
@@ -36,44 +39,69 @@ async function runExecutionExample() {
   console.log("========================================");
 
   // Create services
-  const pluginRegistry = new PluginRegistry();
-  const workflowCompiler = new WorkflowCompiler(pluginRegistry);
-  const streamService = new WorkflowStreamService();
-  const workflowExecutor = new WorkflowExecutor(workflowCompiler);
-  const storageService = new ExecutionStorageService();
-  const monitorService = new ExecutionMonitorService();
+  // const pluginRegistry = new PluginRegistry();
+  // const workflowCompiler = new WorkflowCompiler(pluginRegistry);
+  // const streamService = new WorkflowStreamService();
+  // const workflowExecutor = new WorkflowExecutor(workflowCompiler);
+  // const storageService = new ExecutionStorageService();
+  // const monitorService = new ExecutionMonitorService();
 
-  // Create execution service
-  const executionService = new ExecutionService(
-    workflowExecutor,
-    streamService,
-    storageService,
-    monitorService,
-  );
+  DI.register(PluginRegistry);
+  DI.register(WorkflowCompiler);
+  DI.register(WorkflowStreamService);
+  DI.register(WorkflowExecutor);
+  DI.register(ExecutionStorageService);
+  DI.register(ExecutionMonitorService);
+  DI.register(ExecutionService);
 
-  // Register plugins
-  const plugins = [
-    new SearchPlugin(),
-    new WebReaderPlugin(),
-    new ReasoningPlugin(),
-    new TokenBudgetPlugin(),
-    new EndPlugin(),
-  ];
+  const pluginRegistry = DI.get(PluginRegistry);
+  const workflowCompiler = DI.get(WorkflowCompiler);
+  const streamService = DI.get(WorkflowStreamService);
+  const workflowExecutor = DI.get(WorkflowExecutor);
+  const storageService = DI.get(ExecutionStorageService);
+  const monitorService = DI.get(ExecutionMonitorService);
+  const executionService = DI.get(ExecutionService);
+  DI.register(ExecutionService);
+  DI.register(SearchPlugin);
+  DI.register(WebReaderPlugin);
+  DI.register(ReasoningPlugin);
+  DI.register(TokenBudgetPlugin);
+  DI.register(EndPlugin);
+  DI.register(ProcessPlugin);
+  DI.register(BranchPlugin);
+  DI.register(StartPlugin);
 
   // Initialize and register plugins
-  const logger = console;
+  const logger = new ApplicationLogger();
+  // const executionService = DI.get(ExecutionService);
+
   const context = {
     logger,
-    services: { getService: () => undefined },
+    services: {
+      getService<T>(serviceId: string): T | undefined {
+        if (serviceId === "executionService") {
+          return executionService as T;
+        }
+        return undefined;
+      },
+    },
   };
-
+  const plugins = [
+    DI.get(SearchPlugin),
+    DI.get(WebReaderPlugin),
+    DI.get(ReasoningPlugin),
+    DI.get(TokenBudgetPlugin),
+    DI.get(EndPlugin),
+    DI.get(ProcessPlugin),
+    DI.get(BranchPlugin),
+    DI.get(StartPlugin),
+  ];
   for (const plugin of plugins) {
     await plugin.initialize(context);
     pluginRegistry.registerPlugin(plugin);
     await plugin.activate();
     console.log(`Registered plugin: ${plugin.name}`);
   }
-
   // Define a sample workflow
   const workflow: Workflow = {
     id: "example-workflow",

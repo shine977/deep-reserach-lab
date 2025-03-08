@@ -56,7 +56,10 @@ import { WorkflowExecutor } from "../../workflow/services/workflow-executor.serv
 import { WorkflowStreamService } from "../../workflow/services/workflow-stream.service";
 import { ExecutionStorageService } from "./execution-storage.service";
 import { ExecutionMonitorService } from "./execution-monitor.service";
+import { Injectable } from "@deep-research-lab/core/di";
+import { ApplicationLogger } from "@deep-research-lab/shared";
 
+@Injectable()
 export class ExecutionService {
   private activeExecutions = new Map<
     string,
@@ -76,14 +79,39 @@ export class ExecutionService {
       cancel: () => void;
     }
   >();
-
+  private branches: any[] = [];
+  private completedBranchCount = 0;
+  private logger = new ApplicationLogger(ExecutionService.name);
   constructor(
     private workflowExecutor: WorkflowExecutor,
     private streamService: WorkflowStreamService,
     private storageService: ExecutionStorageService,
     private monitorService: ExecutionMonitorService,
   ) {}
-
+  /**
+   * Complete a branch
+   */
+  completeBranch(branchId: string): void {
+    const branch = this.branches.find((b) => b.id === branchId);
+    if (branch) {
+      branch.status = "completed";
+      this.completedBranchCount++;
+      this.logger.info(
+        `Branch ${branchId} completed. Total completed: ${this.completedBranchCount}/${this.branches.length}`,
+      );
+      this.storageService
+        .updateBranch({
+          ...branch,
+          status: "completed",
+          completedAt: new Date(),
+        })
+        .catch((err) =>
+          this.logger.error(`Failed to update branch status: ${err.message}`),
+        );
+    } else {
+      this.logger.warn(`Cannot complete branch ${branchId}: branch not found`);
+    }
+  }
   /**
    * Get execution progress
    */
@@ -209,11 +237,7 @@ export class ExecutionService {
   /**
    * Emit an execution event
    */
-  private emitExecutionEvent(
-    executionId: string,
-    type: string,
-    data?: any,
-  ): void {
+  emitExecutionEvent(executionId: string, type: string, data?: any): void {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) return;
 
@@ -223,8 +247,9 @@ export class ExecutionService {
       type,
       data,
     };
-
+    this.logger.debug(`Emitting event: ${type} for execution ${executionId}`);
     execData.events$.next(event);
+    this.handleBranchEvent(event);
   }
 
   /**
@@ -432,7 +457,7 @@ export class ExecutionService {
   /**
    * Handle a branch-related event
    */
-  private handleBranchEvent(event: StreamEvent): void {
+  handleBranchEvent(event: StreamEvent): void {
     const executionId = event.executionId;
 
     const execData = this.activeExecutions.get(executionId);
