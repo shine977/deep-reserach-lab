@@ -23,11 +23,37 @@ export class WorkflowExecutor {
 
   /**
    * Execute a workflow with the given input
+   * @param workflow The workflow to execute
+   * @param initialInput The initial input to the workflow
+   * @param options Optional execution options
+   * @returns An observable that emits the workflow result
    */
-  execute(workflow: Workflow, initialInput: any): Observable<WorkflowResult> {
-    // Generate execution ID
-    const executionId = uuidv4();
-    const mainBranchId = uuidv4();
+  execute(
+    workflow: Workflow,
+    initialInput: any,
+    options?: {
+      executionId?: string;
+      branchId?: string;
+      timeout?: number;
+      maxTokens?: number;
+      enableBranching?: boolean;
+      maxBranches?: number;
+    },
+  ): Observable<WorkflowResult> {
+    // Branching options
+    const branchingOptions = {
+      enableBranching: options?.enableBranching || false,
+      maxBranches: options?.maxBranches || 10,
+    };
+
+    // Create execution ID or use provided one
+    const executionId = options?.executionId || uuidv4();
+    console.log("execute~~~~~~~~~~~~~~~~~~~~~~~~~executionId", executionId);
+    // Create main branch ID or use provided one (if branching is enabled)
+    const mainBranchId = branchingOptions.enableBranching
+      ? options?.branchId || uuidv4()
+      : "";
+    console.log("execute~~~~~~~~~~~~~~~~~~~~~~~~~mainBranchId", mainBranchId);
     // Create execution state
     const state: WorkflowExecutionState = {
       id: executionId,

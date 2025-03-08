@@ -90,6 +90,7 @@ export interface ExecutionRecord {
 
   // Branch information
   branches?: ExecutionBranch[];
+  completedBranchCount?: number;
 }
 
 /**

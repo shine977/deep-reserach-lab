@@ -59,7 +59,10 @@ export class WorkflowStreamService {
   ): Observable<StreamItem> {
     // Generate execution ID
     const executionId = options.executionId || uuidv4();
-
+    console.log(
+      "createStream~~~~~~~~~~~~~~~~~~~~~~~~~executionId",
+      executionId,
+    );
     // Create node map for quick access
     const nodeMap = new Map<string, WorkflowNode>();
     workflow.nodes.forEach((node) => nodeMap.set(node.id, node));

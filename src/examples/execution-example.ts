@@ -183,9 +183,17 @@ async function runExecutionExample() {
             console.log(
               `Progress: ${progress.progress}% | Status: ${progress.status} | ` +
                 `Active branches: ${progress.activeBranches || 0}, ` +
-                `Completed branches: ${progress.completedBranches || 0}`,
+                `Completed branches: ${progress.completedBranches || 0} ${record.completedBranchCount} ${record.status}`,
             ),
           error: (err) => console.error("Error monitoring progress:", err),
+          complete: () => {
+            console.log(
+              "Execution completed with " +
+                record.completedBranchCount +
+                " branches, status: " +
+                record.status,
+            );
+          },
         });
 
         // Monitor events

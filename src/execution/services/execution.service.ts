@@ -61,6 +61,7 @@ import { ApplicationLogger } from "@deep-research-lab/shared";
 
 @Injectable()
 export class ExecutionService {
+  private executionRecords = new Map<string, ExecutionRecord>();
   private activeExecutions = new Map<
     string,
     {
@@ -262,7 +263,10 @@ export class ExecutionService {
   ): Observable<ExecutionRecord> {
     // Generate execution ID
     const executionId = uuidv4();
-
+    console.log(
+      "executeWorkflow~~~~~~~~~~~~~~~~~~~~~~~~~executionId",
+      executionId,
+    );
     // Create execution record
     const record: ExecutionRecord = {
       id: executionId,
@@ -276,6 +280,7 @@ export class ExecutionService {
       priority: options.priority || 1,
       metadata: options.metadata || {},
       branches: [],
+      completedBranchCount: 0,
     };
 
     // Create progress and events subjects
@@ -339,15 +344,21 @@ export class ExecutionService {
 
     // Monitor the stream for events
     this.monitorService.monitorExecution(stream$, executionId, workflow);
-
+    let mainBranchId = "";
     // Initialize the main branch if branching is enabled
     if (options.enableBranching) {
-      this.createBranch(executionId, {
+      const branchData = {
+        id: uuidv4(),
         name: "Main Branch",
         description: "Initial workflow execution path",
         tags: ["main"],
         priority: 10,
-      });
+        executionId,
+        status: BranchStatus.PENDING,
+        createdAt: new Date(),
+      };
+      mainBranchId = branchData.id;
+      this.createBranch(executionId, branchData, branchData.id);
     }
 
     // Subscribe to stream events for progress updates
@@ -378,80 +389,89 @@ export class ExecutionService {
     });
 
     // Execute the workflow
-    return this.workflowExecutor.execute(workflow, input).pipe(
-      tap((result) => {
-        // Update record with result
-        record.status =
-          result.status === "completed"
-            ? ExecutionStatus.COMPLETED
-            : ExecutionStatus.FAILED;
-        record.finishedAt = new Date();
-        record.result = result.result;
-        record.error = result.error;
+    return this.workflowExecutor
+      .execute(workflow, input, {
+        executionId,
+        branchId: mainBranchId,
+        enableBranching: options.enableBranching,
+        maxBranches: options.maxBranches,
+        timeout: options.timeoutMs,
+        maxTokens: options.tokenBudget,
+      })
+      .pipe(
+        tap((result) => {
+          // Update record with result
+          record.status =
+            result.status === "completed"
+              ? ExecutionStatus.COMPLETED
+              : ExecutionStatus.FAILED;
+          record.finishedAt = new Date();
+          record.result = result.result;
+          record.error = result.error;
 
-        // Calculate token usage if available
-        if (result.result && result.result.budget) {
-          record.tokenUsage = {
-            input: result.result.budget.used || 0,
-            output: 0, // Not tracked separately in current implementation
-            total: result.result.budget.used || 0,
-          };
-        }
+          // Calculate token usage if available
+          if (result.result && result.result.budget) {
+            record.tokenUsage = {
+              input: result.result.budget.used || 0,
+              output: 0, // Not tracked separately in current implementation
+              total: result.result.budget.used || 0,
+            };
+          }
 
-        // Update final progress
-        progress$.next({
-          ...progress$.value,
-          status: record.status,
-          progress: 100,
-          completedNodes: workflow.nodes.map((n) => n.id),
-          pendingNodes: [],
-        });
+          // Update final progress
+          progress$.next({
+            ...progress$.value,
+            status: record.status,
+            progress: 100,
+            completedNodes: workflow.nodes.map((n) => n.id),
+            pendingNodes: [],
+          });
 
-        // Emit completion event
-        this.emitExecutionEvent(executionId, "execution:complete", {
-          result: result.result,
-          status: record.status,
-        });
+          // Emit completion event
+          this.emitExecutionEvent(executionId, "execution:complete", {
+            result: result.result,
+            status: record.status,
+          });
 
-        // Complete active branches
-        this.completeActiveBranches(executionId);
+          // Complete active branches
+          this.completeActiveBranches(executionId);
 
-        // Complete events
-        events$.complete();
-      }),
+          // Complete events
+          events$.complete();
+        }),
 
-      // Store execution result
-      finalize(() => {
-        // Save final record state
-        this.storageService
-          .updateExecution(record)
-          .catch((err) =>
-            console.error("Failed to update execution record:", err),
-          );
+        // Store execution result
+        finalize(() => {
+          // Save final record state
+          this.storageService
+            .updateExecution(record)
+            .catch((err) =>
+              console.error("Failed to update execution record:", err),
+            );
 
-        // Collect execution metrics
-        this.monitorService
-          .collectExecutionMetrics(executionId)
-          .then((metrics) => {
-            record.metadata = { ...record.metadata, metrics };
-            this.storageService
-              .updateExecution(record)
-              .catch((err) =>
-                console.error("Failed to update execution metrics:", err),
-              );
-          })
-          .catch((err) => console.error("Failed to collect metrics:", err));
+          // Collect execution metrics
+          this.monitorService
+            .collectExecutionMetrics(executionId)
+            .then((metrics) => {
+              record.metadata = { ...record.metadata, metrics };
+              this.storageService
+                .updateExecution(record)
+                .catch((err) =>
+                  console.error("Failed to update execution metrics:", err),
+                );
+            })
+            .catch((err) => console.error("Failed to collect metrics:", err));
 
-        // Remove from active executions
-        this.activeExecutions.delete(executionId);
-      }),
+          // Remove from active executions
+          this.activeExecutions.delete(executionId);
+        }),
 
-      // Map to execution record
-      map(() => record),
+        // Map to execution record
+        map(() => record),
 
-      // Share replay to allow multiple subscribers
-      shareReplay(1),
-    );
+        // Share replay to allow multiple subscribers
+        shareReplay(1),
+      );
   }
 
   /**
@@ -536,6 +556,22 @@ export class ExecutionService {
           progress.completedBranches = (progress.completedBranches || 0) + 1;
           progress.activeBranches = (progress.activeBranches || 0) - 1;
           execData.progress$.next(progress);
+          // Update the record to ensure the branch count is persisted
+          const record = execData.record;
+          record.completedBranchCount = (record.completedBranchCount || 0) + 1;
+          this.storageService
+            .updateExecution(record)
+            .catch((err) =>
+              console.error(
+                `Failed to update execution record branch completion count:`,
+                err,
+              ),
+            );
+
+          // Log branch completion
+          this.logger.info(
+            `Branch ${branchId} completed. ${record.completedBranchCount} branches completed in execution ${executionId}`,
+          );
         }
         break;
 
@@ -641,7 +677,7 @@ export class ExecutionService {
   createBranch(
     executionId: string,
     options: BranchOptions,
-    branchId: string = uuidv4(),
+    branchId: string,
     parentBranchId?: string,
   ): Observable<ExecutionBranch> {
     const execData = this.activeExecutions.get(executionId);
@@ -941,7 +977,7 @@ export class ExecutionService {
     },
   ): Promise<ExecutionBranch[]> {
     const execData = this.activeExecutions.get(executionId);
-
+    console.log("execData", execData);
     // For active executions, combine in-memory data with storage
     if (execData) {
       // Get branches from active execution
