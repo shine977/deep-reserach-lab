@@ -1,0 +1,5 @@
+{
+  "name": "@deep-research-lab/built-in-plugins",
+  "version": "1.0.0",
+  "main": "index.ts"
+}
