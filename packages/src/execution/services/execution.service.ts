@@ -14,6 +14,7 @@ import {
   BehaviorSubject,
   EMPTY,
   from,
+  ReplaySubject,
 } from "rxjs";
 import {
   map,
@@ -68,13 +69,13 @@ export class ExecutionService {
     {
       record: ExecutionRecord;
       progress$: BehaviorSubject<ExecutionProgress>;
-      events$: Subject<ExecutionEvent>;
+      events$: ReplaySubject<ExecutionEvent>;
       branches: Map<
         string,
         {
           branch: ExecutionBranch;
           progress$: BehaviorSubject<BranchProgress>;
-          events$: Subject<BranchEvent>;
+          events$: ReplaySubject<BranchEvent>;
           cancel: () => void;
         }
       >;
@@ -138,7 +139,6 @@ export class ExecutionService {
         () => new Error(`Execution ${id} not found or not active`),
       );
     }
-
     return execData.events$.asObservable();
   }
 
@@ -243,7 +243,7 @@ export class ExecutionService {
       executionId,
       timestamp: new Date(),
       type,
-      data,
+      ...data,
     };
     this.logger.debug(`Emitting event: ${type} for execution ${executionId}`);
     execData.events$.next(event);
@@ -292,7 +292,7 @@ export class ExecutionService {
       failedBranches: 0,
     });
 
-    const events$ = new Subject<ExecutionEvent>();
+    const events$ = new ReplaySubject<ExecutionEvent>(100);
 
     // Store in active executions
     const cancelFn = () => this.cancelExecution(executionId);
@@ -360,6 +360,8 @@ export class ExecutionService {
 
     // Subscribe to stream events for progress updates
     this.streamService.getEvents().subscribe((event: StreamEvent) => {
+      console.log(`Stream event received: ${event.type}`, event);
+
       // Convert to execution event
       const execEvent: ExecutionEvent = {
         executionId,
@@ -367,8 +369,11 @@ export class ExecutionService {
         type: event.type,
         nodeId: event.nodeId,
         branchId: event.branchId,
-        data: event.data,
+        ...event.data,
       };
+      console.log(
+        `Emitting execution event: ${execEvent.type} to events$ subject`,
+      );
       // Emit execution event
       events$.next(execEvent);
 
@@ -427,12 +432,9 @@ export class ExecutionService {
             result: result.result,
             status,
           });
-
+          events$.complete();
           // Complete active branches
           this.completeActiveBranches(executionId);
-
-          // Complete events
-          events$.complete();
         }),
 
         // Store execution result
@@ -456,7 +458,8 @@ export class ExecutionService {
                 );
             })
             .catch((err) => console.error("Failed to collect metrics:", err));
-
+          // Complete events
+          // events$.complete();
           // Remove from active executions
           this.activeExecutions.delete(executionId);
         }),
@@ -473,7 +476,6 @@ export class ExecutionService {
    * Handle a branch-related event
    */
   handleBranchEvent(event: StreamEvent): void {
-    console.log(`handleBranchEvent: ${event.type}, 分支ID: ${event.branchId}`);
     const executionId = event.executionId;
 
     const execData = this.activeExecutions.get(executionId);
@@ -713,7 +715,7 @@ export class ExecutionService {
       pendingNodeIds: [],
     });
 
-    const events$ = new Subject<BranchEvent>();
+    const events$ = new ReplaySubject<BranchEvent>(100);
 
     // Store in active branches
     const cancelFn = () => this.cancelBranch(executionId, branchId);

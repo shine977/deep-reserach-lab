@@ -150,7 +150,7 @@ async function runNestExecutionExample() {
     execution$.subscribe({
       next: (record: any) => {
         executionId = record.id;
-        console.log(`Execution started with ID: ${record.id}`);
+        console.log(`Execution started with ID: ${record.branchId}`);
 
         // Monitor progress
         executionService.getExecutionProgress(record.id).subscribe({
@@ -174,32 +174,39 @@ async function runNestExecutionExample() {
         // Monitor events
         executionService.getExecutionEvents(record.id).subscribe({
           next: (event) => {
-            console.log(
-              "executionService.getExecutionEvents",
-              JSON.stringify(event, null, 2),
-            );
+            console.log("execution-example getExecutionEvents:", event);
             if (event.branchId) {
               console.log(
                 `Branch event: ${event.type} - Branch: ${event.branchId}`,
               );
+              executionService
+                .getBranchEvents(executionId, event.branchId)
+                .subscribe({
+                  next: (branchEvent) => {
+                    if (
+                      branchEvent.type === "branch:start" &&
+                      branchEvent.data?.name?.includes("Low Priority")
+                    ) {
+                      console.log(
+                        `Canceling low priority branch: ${branchEvent.branchId}`,
+                      );
 
+                      setTimeout(async () => {
+                        const canceled = await executionService.cancelBranch(
+                          executionId,
+                          event.branchId!,
+                        );
+                        console.log(
+                          `Branch cancellation ${canceled ? "succeeded" : "failed"}`,
+                        );
+                      }, 500);
+                    }
+                  },
+                  error: (err) =>
+                    console.error("Error monitoring branch events:", err),
+                  complete: () => console.log("Branch events completed"),
+                });
               // Demonstration: Cancel a specific branch after it starts
-              if (
-                event.type === "branch:start" &&
-                event.data?.name?.includes("Low Priority")
-              ) {
-                console.log(`Canceling low priority branch: ${event.branchId}`);
-
-                setTimeout(async () => {
-                  const canceled = await executionService.cancelBranch(
-                    executionId,
-                    event.branchId!,
-                  );
-                  console.log(
-                    `Branch cancellation ${canceled ? "succeeded" : "failed"}`,
-                  );
-                }, 500);
-              }
             } else {
               console.log(
                 `Execution event: ${event.type}${
@@ -209,7 +216,9 @@ async function runNestExecutionExample() {
             }
           },
           complete: () => {
-            console.log("Execution events completed");
+            console.log(
+              "execution-example getExecutionEvents Execution events completed",
+            );
           },
         });
       },
@@ -240,7 +249,6 @@ async function runNestExecutionExample() {
       executions[0].id,
     );
     console.log(`Cancellation ${cancelSuccess ? "successful" : "failed"}`);
-
     // Example 4: Execute with different options
     console.log("\n4. Executing workflow with high priority");
     const priorityExecution$ = executionService.executeWorkflow(

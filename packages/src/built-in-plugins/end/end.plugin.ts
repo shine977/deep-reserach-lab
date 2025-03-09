@@ -58,7 +58,7 @@ export class EndPlugin implements NodePlugin {
     @Inject()
     private executionService: ExecutionService,
   ) {
-    console.log("enplugin~~~~~this.executionService", this.executionService);
+    console.log("enplugin~~~~~");
   }
   /**
    * Initialize the plugin
