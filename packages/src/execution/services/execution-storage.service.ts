@@ -5,7 +5,7 @@
  * providing methods to save, retrieve, and query execution history.
  */
 
-import { Injectable } from "@delab/core/di";
+import { Injectable } from "@nestjs/common";
 import {
   ExecutionRecord,
   ExecutionFilter,

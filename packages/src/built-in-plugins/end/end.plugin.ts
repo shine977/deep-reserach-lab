@@ -11,22 +11,24 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
-} from "@delab/core/types/plugin.types";
-import { Inject, Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
-import { ExecutionService } from "@delab/execution";
+  PluginMetadata,
+} from "@packages/core/types/plugin.types";
+import { Inject, Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
+import { ExecutionService } from "@packages/execution";
 
 @Injectable()
 export class EndPlugin implements NodePlugin {
   logger = new Logger(EndPlugin.name);
 
   // Plugin metadata
-  id = "end-plugin";
-  name = "Workflow End";
-  version = "1.0.0";
-  description = "Marks the end of a workflow process";
+  metadata: PluginMetadata = {
+    id: "end-plugin",
+    name: "Workflow End",
+    version: "1.0.0",
+    description: "Marks the end of a workflow process",
+  };
   nodeType = "end";
-
   // Schema definitions
   inputSchema: JSONSchema = {
     type: "object",

@@ -24,7 +24,7 @@ import {
   WorkflowNode,
   Workflow,
   Connection,
-} from "@delab/core/types/workflow.types";
+} from "@packages/core/types/workflow.types";
 import {
   StreamItem,
   StreamEvent,
@@ -37,7 +37,7 @@ import {
   withTimeout,
   trackTokens,
 } from "../utils/rxjs-operators";
-import { Injectable } from "@delab/core/di";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class WorkflowStreamService {

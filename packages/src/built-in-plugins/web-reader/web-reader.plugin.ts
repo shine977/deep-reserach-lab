@@ -11,10 +11,11 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
-} from "@delab/core";
+  PluginMetadata,
+} from "@packages/core";
 import axios from "axios";
-import { Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 export interface ContentItem {
   url: string;
@@ -33,10 +34,12 @@ interface SearchResult {
 export class WebReaderPlugin implements NodePlugin {
   logger = new Logger(WebReaderPlugin.name);
   // Plugin metadata
-  id = "web-reader-plugin";
-  name = "Web Content Reader";
-  version = "1.0.0";
-  description = "Reads and extracts content from web pages";
+  metadata: PluginMetadata = {
+    id: "web-reader-plugin",
+    name: "Web Content Reader",
+    version: "1.0.0",
+    description: "Reads and extracts content from web pages",
+  };
   nodeType = "web-reader";
 
   // Schema definitions

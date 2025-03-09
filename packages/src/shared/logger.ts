@@ -1,62 +1,86 @@
-import { LoggerService } from "@nestjs/common";
+const colors = {
+  reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  dim: "\x1b[2m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
+  white: "\x1b[37m",
+  gray: "\x1b[90m",
+};
 
 type ComplexMessage = string | undefined | unknown;
-export class Logger implements LoggerService {
-  private name?: ComplexMessage;
-  constructor(name?: ComplexMessage) {
-    this.name = name;
-  }
-  private getColorByLogLevel(level: string): string {
-    switch (level) {
-      case "error":
-        return "\x1b[31m";
-      case "warn":
-        return "\x1b[33m";
-      case "info":
-        return "\x1b[90m";
-      case "debug":
-        return "\x1b[35m";
-      case "verbose":
-        return "\x1b[35m";
-      default:
-        return "\x1b[37m";
-    }
+
+/**
+ * Custom application logger with colored terminal output
+ * Independent implementation without NestJS dependency
+ */
+
+const PREFIX = "[DeepRearchLab]";
+export class Logger {
+  private context?: ComplexMessage;
+
+  constructor(context?: ComplexMessage) {
+    this.context = context;
   }
 
-  log(message: any, context?: string) {
-    this.customLog(message, "info", context);
+  error(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
+    console.error(
+      `${colors.red}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   ${colors.red}ERROR${colors.reset} ${
+        contextToUse ? `${colors.yellow}[${contextToUse}]${colors.reset} ` : ""
+      }${colors.red}${message}${colors.reset}`,
+    );
   }
 
-  error(message: any, trace?: string, context?: string) {
-    this.customLog(message, "error", context);
-    if (trace) {
-      console.error(
-        `${this.getColorByLogLevel("error")}[ERROR] ${trace}\x1b[0m`,
-      );
-    }
-  }
-
-  warn(message: any, context?: string) {
-    this.customLog(message, "warn", context);
-  }
-
-  debug(message: any, context?: string) {
-    this.customLog(message, "debug", context);
-  }
-
-  verbose(message: any, context?: string) {
-    this.customLog(message, "verbose", context);
-  }
-  info(message: any, context?: string) {
-    this.customLog(message, "info", context);
-  }
-
-  private customLog(message: any, level: string, context?: string) {
-    const color = this.getColorByLogLevel(level);
-    const timestamp = new Date().toLocaleTimeString();
-    // custom log
+  log(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
     console.log(
-      `${color}[ DeepResearchLab ] ${timestamp} [${level.toUpperCase()}]${context ? ` [${context}]` : ""}: ${this.name ? ` [${this.name}]` : "LOG"} ${message}\x1b[0m`,
+      `${colors.gray}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   LOG ${
+        contextToUse ? `${colors.yellow}[${contextToUse}] ` : ""
+      }${colors.reset} ${message}`,
+    );
+  }
+
+  warn(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
+    console.warn(
+      `${colors.yellow}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   ${colors.yellow}WARN${colors.reset} ${
+        contextToUse ? `${colors.yellow}[${contextToUse}] ` : ""
+      }${message}${colors.reset}`,
+    );
+  }
+
+  debug(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
+    console.debug(
+      `${colors.magenta}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   ${colors.magenta}DEBUG${colors.reset} ${
+        contextToUse ? `${colors.yellow}[${contextToUse}] ` : ""
+      }${colors.magenta}${message}${colors.reset}`,
+    );
+  }
+
+  verbose(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
+    console.log(
+      `${colors.cyan}${colors.bright}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset}   ${colors.cyan}VERBOSE${colors.reset} ${
+        contextToUse ? `${colors.yellow}[${contextToUse}] ` : ""
+      }${message}${colors.reset}`,
+    );
+  }
+  info(message: ComplexMessage, context?: ComplexMessage): void {
+    const contextToUse = context || this.context;
+    const timestamp = new Date().toLocaleString();
+    console.info(
+      `${colors.gray}${PREFIX}${colors.reset} - ${colors.dim}${timestamp}${colors.reset} ${colors.green}INFO${colors.reset} ${contextToUse ? `${colors.green} [${contextToUse}]${colors.reset} ` : ""}${colors.green}${message}${colors.reset}`,
     );
   }
 }

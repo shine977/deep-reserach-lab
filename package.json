@@ -1,10 +1,10 @@
 {
-  "name": "delab",
+  "name": "deep-research-lab",
   "version": "0.1.0",
   "private": true,
   "description": "TypeScript implementation of DeepSearch system with plugin architecture",
   "main": "dist/main.js",
-  "type": "module",
+
   "workspaces": [
     "packages/src/*",
     "app"
@@ -16,8 +16,8 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "example": "ts-node -r tsconfig-paths/register src/examples/simple-example.ts",
-    "execution-example": "ts-node -r tsconfig-paths/register src/examples/execution-example.ts",
+    "example": "ts-node -r tsconfig-paths/register packages/src/examples/simple-example.ts",
+    "execution-example": "ts-node -r tsconfig-paths/register packages/src/examples/execution-example.ts",
     "test": "jest",
     "lint": "eslint \"packages/src/**/*.ts\" --config eslint.config.js",
     "lint:fix": "eslint \"packages/src/**/*.ts\"  --config eslint.config.js --fix",

@@ -20,7 +20,7 @@ import {
   ExecutionFilter,
   ExecutionMetrics,
 } from "../models/execution.types";
-import { Workflow } from "@delab/core/types/workflow.types";
+import { Workflow } from "@packages/core/types/workflow.types";
 
 /**
  * Execution service interface

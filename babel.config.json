@@ -10,8 +10,8 @@
     ["module-resolver", {
       "root": ["./src"],
       "alias": {
-        "@delab": "./src",
-        "@": "./src"
+        "@packages": "./src",
+        "@app": "./app/src"
       }
     }]
   ]

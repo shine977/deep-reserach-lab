@@ -12,15 +12,15 @@ import {
   NodePlugin,
   ExecutionContext,
   WorkflowCompileOptions,
-} from "packages/src/core";
-import { PluginRegistry } from "packages/src/plugin-system";
-import { Logger } from "packages/src/shared";
-import { Injectable } from "@delab/core/di";
+} from "@packages/core";
+import { PluginRegistry } from "@packages/plugin-system";
+import { Logger } from "@packages/shared";
+import { Inject, Injectable } from "@nestjs/common";
 
 @Injectable()
 export class WorkflowCompiler {
   logger = new Logger(WorkflowCompiler.name);
-  constructor(private pluginRegistry: PluginRegistry) {}
+  constructor(@Inject() private pluginRegistry: PluginRegistry) {}
 
   /**
    * Compile a workflow into an executable form

@@ -5,7 +5,7 @@
  * which manages workflow execution instances and their lifecycle.
  */
 
-import { Workflow, WorkflowResult } from "@delab/core/types/workflow.types";
+import { Workflow, WorkflowResult } from "@packages/core/types/workflow.types";
 
 /**
  * Execution status enum
@@ -90,7 +90,7 @@ export interface ExecutionRecord {
 
   // Branch information
   branches?: ExecutionBranch[];
-  completedBranchCount?: number;
+  completedBranchCount: number;
 }
 
 /**
@@ -142,8 +142,8 @@ export interface ExecutionProgress {
   startTime: Date;
   estimatedTimeRemaining?: number; // milliseconds
   messages?: string[];
-  activeBranches?: number;
-  completedBranches?: number;
+  activeBranches: number;
+  completedBranches: number;
   failedBranches?: number;
 }
 

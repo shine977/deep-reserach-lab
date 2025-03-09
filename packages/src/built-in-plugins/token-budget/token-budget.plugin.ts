@@ -11,9 +11,10 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
-} from "@delab/core/types/plugin.types";
-import { Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+  PluginMetadata,
+} from "@packages/core/types/plugin.types";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 export interface TokenUsage {
   total: number;
@@ -26,10 +27,13 @@ export interface TokenUsage {
 export class TokenBudgetPlugin implements NodePlugin {
   logger = new Logger(TokenBudgetPlugin.name);
   // Plugin metadata
-  id = "token-budget-plugin";
-  name = "Token Budget Manager";
-  version = "1.0.0";
-  description = "Manages token usage throughout the search process";
+  metadata: PluginMetadata = {
+    id: "token-budget-plugin",
+    name: "Token Budget Manager",
+    version: "1.0.0",
+    description: "Manages token usage throughout the search process",
+  };
+
   nodeType = "token-budget";
 
   // Schema definitions

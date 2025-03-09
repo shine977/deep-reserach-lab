@@ -11,18 +11,21 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
-} from "@delab/core";
-import { Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+  PluginMetadata,
+} from "@packages/core";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 @Injectable()
 export class ProcessPlugin implements NodePlugin {
   logger = new Logger(ProcessPlugin.name);
   // Plugin metadata
-  id = "process-plugin";
-  name = "Process Node";
-  version = "1.0.0";
-  description = "Generic process node for workflow execution";
+  metadata: PluginMetadata = {
+    id: "process-plugin",
+    name: "Process Node",
+    version: "1.0.0",
+    description: "Generic process node for workflow execution",
+  };
   nodeType = "process"; // This is important - matches the node type in workflow definition
 
   // Schema definitions

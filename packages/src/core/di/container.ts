@@ -126,11 +126,8 @@ export class Container {
    * @returns Resolved instance
    */
   get<T>(token: Token<T>): T {
-    this.log(`Resolving token:`, token);
-
     // Return cached instance if available
     if (this.instances.has(token)) {
-      this.log(`Using cached instance for:`, token);
       return this.instances.get(token);
     }
 
@@ -142,7 +139,6 @@ export class Container {
         typeof token === "function" &&
         Reflect.getMetadata(INJECTABLE_METADATA, token)
       ) {
-        this.log(`Auto-registering injectable class:`, token);
         this.register(token as Constructor<T>);
         return this.get(token);
       }

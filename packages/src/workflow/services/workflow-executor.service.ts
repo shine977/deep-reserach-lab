@@ -10,16 +10,16 @@ import {
   Workflow,
   WorkflowResult,
   WorkflowExecutionState,
-} from "@delab/core/types/workflow.types";
+} from "@packages/core/types/workflow.types";
 import { WorkflowCompiler } from "./workflow-compiler.service";
 import { v4 as uuidv4 } from "uuid";
-import { Injectable } from "@delab/core/di";
+import { Inject, Injectable } from "@nestjs/common";
 
 @Injectable()
 export class WorkflowExecutor {
   private executionStates: Map<string, WorkflowExecutionState> = new Map();
 
-  constructor(private compiler: WorkflowCompiler) {}
+  constructor(@Inject() private compiler: WorkflowCompiler) {}
 
   /**
    * Execute a workflow with the given input

@@ -2,14 +2,7 @@
     "compilerOptions": {
       "baseUrl": ".",
       "paths": {
-        "@delab/core": ["packages/src/core/index"],
-        "@delab/workflow": ["packages/src/workflow/index"],
-        "@delab/execution": ["packages/src/execution/index"],
-        "@delab/plugin-system": ["packages/src/plugin-system/index"],
-        "@delab/built-in-plugins": ["packages/src/built-in-plugins/index"],
-        "@delab/shared": ["packages/src/shared/index"],
-        "@delab/api": ["packages/src/api/index"],
-        "@delab/app": ["app/src/*"]
+        "@packages/*": ["packages/src/*"],
       }
     }
   }

@@ -11,10 +11,11 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
-} from "@delab/core/types/plugin.types";
+  PluginMetadata,
+} from "@packages/core/types/plugin.types";
 import axios from "axios";
-import { Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 export interface SearchResult {
   url: string;
@@ -26,10 +27,12 @@ export interface SearchResult {
 export class SearchPlugin implements NodePlugin {
   logger = new Logger(SearchPlugin.name);
   // Plugin metadata
-  id = "search-plugin";
-  name = "Web Search";
-  version = "1.0.0";
-  description = "Performs web searches and returns results";
+  metadata: PluginMetadata = {
+    id: "search-plugin",
+    name: "Web Search",
+    version: "1.0.0",
+    description: "Performs web searches and returns results",
+  };
   nodeType = "search";
 
   // Schema definitions

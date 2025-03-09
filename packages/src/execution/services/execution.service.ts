@@ -51,13 +51,13 @@ import {
   BranchEventType,
 } from "../models/execution.types";
 
-import { Workflow } from "@delab/core/types/workflow.types";
+import { Workflow } from "@packages/core/types/workflow.types";
 import { WorkflowExecutor } from "../../workflow/services/workflow-executor.service";
 import { WorkflowStreamService } from "../../workflow/services/workflow-stream.service";
 import { ExecutionStorageService } from "./execution-storage.service";
 import { ExecutionMonitorService } from "./execution-monitor.service";
-import { Inject, Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+import { Inject, Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 @Injectable()
 export class ExecutionService {
@@ -201,8 +201,9 @@ export class ExecutionService {
   /**
    * Cancel an execution
    */
-  cancelExecution(id: string): Promise<boolean> {
+  async cancelExecution(id: string): Promise<boolean> {
     const execData = this.activeExecutions.get(id);
+
     if (!execData) {
       return Promise.resolve(false);
     }
@@ -227,19 +228,14 @@ export class ExecutionService {
     });
 
     // Save updated record
-    return this.storageService
-      .updateExecution(execData.record)
-      .then(() => true)
-      .catch((err) => {
-        console.error(`Failed to update canceled execution ${id}:`, err);
-        return false;
-      });
+    this.storageService.updateExecution(execData.record);
+    return Promise.resolve(true);
   }
 
   /**
    * Emit an execution event
    */
-  emitExecutionEvent(executionId: string, type: string, data?: any): void {
+  emitExecutionEvent(executionId: string, type: string, data: any): void {
     const execData = this.activeExecutions.get(executionId);
     if (!execData) return;
 
@@ -251,7 +247,9 @@ export class ExecutionService {
     };
     this.logger.debug(`Emitting event: ${type} for execution ${executionId}`);
     execData.events$.next(event);
-    this.handleBranchEvent(event);
+    if (data.branchId) {
+      this.handleBranchEvent({ ...event, ...data });
+    }
   }
 
   /**
@@ -264,10 +262,7 @@ export class ExecutionService {
   ): Observable<ExecutionRecord> {
     // Generate execution ID
     const executionId = uuidv4();
-    console.log(
-      "executeWorkflow~~~~~~~~~~~~~~~~~~~~~~~~~executionId",
-      executionId,
-    );
+
     // Create execution record
     const record: ExecutionRecord = {
       id: executionId,
@@ -307,8 +302,8 @@ export class ExecutionService {
       events$,
       branches: new Map(), // Initialize empty branches map
       cancel: cancelFn,
+      //
     });
-    console.log(this);
 
     // Save initial record
     this.storageService
@@ -365,8 +360,6 @@ export class ExecutionService {
 
     // Subscribe to stream events for progress updates
     this.streamService.getEvents().subscribe((event: StreamEvent) => {
-      if (event.executionId !== executionId) return;
-
       // Convert to execution event
       const execEvent: ExecutionEvent = {
         executionId,
@@ -376,7 +369,6 @@ export class ExecutionService {
         branchId: event.branchId,
         data: event.data,
       };
-
       // Emit execution event
       events$.next(execEvent);
 
@@ -402,11 +394,12 @@ export class ExecutionService {
       })
       .pipe(
         tap((result) => {
-          // Update record with result
-          record.status =
+          const status =
             result.status === "completed"
               ? ExecutionStatus.COMPLETED
               : ExecutionStatus.FAILED;
+          // Update record with result
+          record.status = status;
           record.finishedAt = new Date();
           record.result = result.result;
           record.error = result.error;
@@ -423,7 +416,7 @@ export class ExecutionService {
           // Update final progress
           progress$.next({
             ...progress$.value,
-            status: record.status,
+            status,
             progress: 100,
             completedNodes: workflow.nodes.map((n) => n.id),
             pendingNodes: [],
@@ -432,7 +425,7 @@ export class ExecutionService {
           // Emit completion event
           this.emitExecutionEvent(executionId, "execution:complete", {
             result: result.result,
-            status: record.status,
+            status,
           });
 
           // Complete active branches
@@ -480,6 +473,7 @@ export class ExecutionService {
    * Handle a branch-related event
    */
   handleBranchEvent(event: StreamEvent): void {
+    console.log(`handleBranchEvent: ${event.type}, 分支ID: ${event.branchId}`);
     const executionId = event.executionId;
 
     const execData = this.activeExecutions.get(executionId);
@@ -555,12 +549,16 @@ export class ExecutionService {
 
           // Update progress
           const progress = execData.progress$.value;
-          progress.completedBranches = (progress.completedBranches || 0) + 1;
-          progress.activeBranches = (progress.activeBranches || 0) - 1;
+          progress.completedBranches++;
+          progress.activeBranches--;
+          this.logger.info(
+            ` progress.completedBranches Branch ${branchId} completed. ${progress.completedBranches} branches completed in execution ${executionId}`,
+          );
           execData.progress$.next(progress);
           // Update the record to ensure the branch count is persisted
+
           const record = execData.record;
-          record.completedBranchCount = (record.completedBranchCount || 0) + 1;
+          record.completedBranchCount++;
           this.storageService
             .updateExecution(record)
             .catch((err) =>
@@ -569,7 +567,6 @@ export class ExecutionService {
                 err,
               ),
             );
-
           // Log branch completion
           this.logger.info(
             `Branch ${branchId} completed. ${record.completedBranchCount} branches completed in execution ${executionId}`,
@@ -775,8 +772,11 @@ export class ExecutionService {
 
         // Update progress
         const progress = execData.progress$.value;
-        progress.completedBranches = (progress.completedBranches || 0) + 1;
-        progress.activeBranches = (progress.activeBranches || 0) - 1;
+        progress.completedBranches++;
+        progress.activeBranches--;
+        this.logger.info(
+          `completeActiveBranches Branch ${branch.id} completed. ${progress.completedBranches} branches completed in execution ${executionId}`,
+        );
         execData.progress$.next(progress);
       }
     });

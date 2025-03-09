@@ -5,12 +5,12 @@
  * It maintains a registry of all available plugins and provides methods to access them.
  */
 
-import { Injectable } from "@delab/core/di";
+import { Injectable } from "@nestjs/common";
 import {
   Plugin,
   NodePlugin,
   ValidationResult,
-} from "@delab/core/types/plugin.types";
+} from "@packages/core/types/plugin.types";
 
 @Injectable()
 export class PluginRegistry {
@@ -28,7 +28,7 @@ export class PluginRegistry {
     }
 
     // Store plugin
-    this.plugins.set(plugin.id, plugin);
+    this.plugins.set(plugin.metadata.id, plugin);
 
     // If it's a node plugin, store it in the node plugins map
     if (this.isNodePlugin(plugin)) {
@@ -100,15 +100,15 @@ export class PluginRegistry {
    */
   private validatePlugin(plugin: Plugin): ValidationResult {
     const errors: string[] = [];
-
+    const metadata = plugin.metadata;
     // Check required fields
-    if (!plugin.id) errors.push("Plugin ID is required");
-    if (!plugin.name) errors.push("Plugin name is required");
-    if (!plugin.version) errors.push("Plugin version is required");
+    if (!metadata.id) errors.push("Plugin ID is required");
+    if (!metadata.name) errors.push("Plugin name is required");
+    if (!metadata.version) errors.push("Plugin version is required");
 
     // Check for duplicate IDs
-    if (this.plugins.has(plugin.id)) {
-      errors.push(`Plugin with ID "${plugin.id}" is already registered`);
+    if (this.plugins.has(metadata.id)) {
+      errors.push(`Plugin with ID "${metadata.id}" is already registered`);
     }
 
     // Additional validation for node plugins

@@ -1,27 +1,12 @@
-/**
- * Execution Module Example
- *
- * This example demonstrates how to use the execution module
- * to execute, monitor, and manage workflow executions.
- */
-
-import { WorkflowCompiler } from "../workflow/services/workflow-compiler.service";
-import { WorkflowExecutor } from "../workflow/services/workflow-executor.service";
-import { WorkflowStreamService } from "../workflow/services/workflow-stream.service";
+// packages/src/examples/nest-execution-example.ts
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "../app.module";
 import { PluginRegistry } from "../plugin-system/services/plugin-registry.service";
-import { ExecutionStorageService } from "../execution/services/execution-storage.service";
-import { ExecutionMonitorService } from "../execution/services/execution-monitor.service";
-import {
-  ExecutionStatus,
-  ExecutionType,
-} from "../execution/models/execution.types";
-
-// Import built-in plugins
-import { Workflow } from "../core/types/workflow.types";
 import { ExecutionService } from "../execution/services/execution.service";
+import { ExecutionMonitorService } from "../execution/services/execution-monitor.service";
 import { BranchStatus } from "../execution/models/execution.types";
-
-import { Logger } from "packages/src/shared";
+import { Workflow } from "../core/types/workflow.types";
+import { Logger } from "../shared/logger";
 import {
   StartPlugin,
   BranchPlugin,
@@ -31,73 +16,43 @@ import {
   WebReaderPlugin,
   ReasoningPlugin,
   TokenBudgetPlugin,
-} from "packages/src/built-in-plugins";
-import { DI } from "packages/src/core";
+} from "../built-in-plugins";
+import { WorkflowCompiler } from "@packages/workflow";
+
+// 在runNestExecutionExample函数开始处添加
+console.log(
+  "PluginRegistry构造函数:",
+  PluginRegistry.toString().match(/constructor\s*\(([^)]*)\)/)?.[1] ||
+    "No constructor",
+);
+
+console.log(
+  "WorkflowCompiler构造函数:",
+  WorkflowCompiler.toString().match(/constructor\s*\(([^)]*)\)/)?.[1] ||
+    "No constructor",
+);
 
 /**
- * Run the execution example
+ * Main function to run the NestJS execution example
+ * This demonstrates how to execute, monitor, and manage workflow executions
+ * within a NestJS dependency injection context
  */
-async function runExecutionExample() {
+async function runNestExecutionExample() {
   console.log("========================================");
-  console.log("Running Execution Module Example...");
+  console.log("Running NestJS Execution Module Example...");
   console.log("========================================");
 
-  // Create services
-  // const pluginRegistry = new PluginRegistry();
-  // const workflowCompiler = new WorkflowCompiler(pluginRegistry);
-  // const streamService = new WorkflowStreamService();
-  // const workflowExecutor = new WorkflowExecutor(workflowCompiler);
-  // const storageService = new ExecutionStorageService();
-  // const monitorService = new ExecutionMonitorService();
+  // Create NestJS application instance
+  const app = await NestFactory.createApplicationContext(AppModule);
+  // Retrieve required services from NestJS container
+  const pluginRegistry = app.get(PluginRegistry);
+  const executionService = app.get(ExecutionService);
+  const monitorService = app.get(ExecutionMonitorService);
 
-  DI.register(PluginRegistry);
-  DI.register(WorkflowCompiler);
-  DI.register(WorkflowStreamService);
-  DI.register(WorkflowExecutor);
-  DI.register(ExecutionStorageService);
-  DI.register(ExecutionMonitorService);
+  // Initialize logger
 
-  DI.register(ExecutionService);
-  DI.register(SearchPlugin);
-  DI.register(WebReaderPlugin);
-  DI.register(ReasoningPlugin);
-  DI.register(TokenBudgetPlugin);
-  DI.register(EndPlugin);
-  DI.register(ProcessPlugin);
-  DI.register(BranchPlugin);
-  DI.register(StartPlugin);
-
-  DI.register({
-    provide: ExecutionService,
-    useFactory: () => {
-      const workflowExecutor = DI.get(WorkflowExecutor);
-      const streamService = DI.get(WorkflowStreamService);
-      const storageService = DI.get(ExecutionStorageService);
-      const monitorService = DI.get(ExecutionMonitorService);
-
-      return new ExecutionService(
-        workflowExecutor,
-        streamService,
-        storageService,
-        monitorService,
-      );
-    },
-  });
-
-  const pluginRegistry = DI.get(PluginRegistry);
-  const workflowCompiler = DI.get(WorkflowCompiler);
-  const streamService = DI.get(WorkflowStreamService);
-  const workflowExecutor = DI.get(WorkflowExecutor);
-  const storageService = DI.get(ExecutionStorageService);
-  const monitorService = DI.get(ExecutionMonitorService);
-  const executionService = DI.get(ExecutionService);
-
-  // Initialize and register plugins
-  const logger = new Logger();
-  // const executionService = DI.get(ExecutionService);
-
+  // Create plugin context
   const context = {
-    logger,
     services: {
       getService<T>(serviceId: string): T | undefined {
         if (serviceId === "executionService") {
@@ -107,23 +62,28 @@ async function runExecutionExample() {
       },
     },
   };
+
+  // Get plugins from NestJS container
   const plugins = [
-    DI.get(SearchPlugin),
-    DI.get(WebReaderPlugin),
-    DI.get(ReasoningPlugin),
-    DI.get(TokenBudgetPlugin),
-    DI.get(EndPlugin),
-    DI.get(ProcessPlugin),
-    DI.get(BranchPlugin),
-    DI.get(StartPlugin),
+    app.get(SearchPlugin),
+    app.get(WebReaderPlugin),
+    app.get(ReasoningPlugin),
+    app.get(TokenBudgetPlugin),
+    app.get(EndPlugin),
+    app.get(ProcessPlugin),
+    app.get(BranchPlugin),
+    app.get(StartPlugin),
   ];
+
+  // Initialize and register plugins
   for (const plugin of plugins) {
     await plugin.initialize(context);
     pluginRegistry.registerPlugin(plugin);
     await plugin.activate();
-    console.log(`Registered plugin: ${plugin.name}`);
+    console.log(`Registered plugin: ${plugin.metadata.name}`);
   }
-  // Define a sample workflow
+
+  // Define sample workflow
   const workflow: Workflow = {
     id: "example-workflow",
     name: "Example Workflow",
@@ -140,7 +100,6 @@ async function runExecutionExample() {
         id: "branch-node",
         type: "branch",
         name: "Branch Node",
-        // This node will create multiple branches
         config: {
           next: ["process-node"],
           branches: [
@@ -155,7 +114,6 @@ async function runExecutionExample() {
         type: "process",
         name: "Process Data",
         config: {
-          // Simulated processing that can be specific to each branch
           processingTime: 1000,
           next: ["end"],
         },
@@ -168,16 +126,12 @@ async function runExecutionExample() {
       },
     ],
     connections: [],
-    // createdAt: new Date(),
-    // updatedAt: new Date(),
-    // version: 1,
   };
 
   try {
     // Example 1: Execute a workflow with monitoring
     console.log("\n1. Executing workflow with standard options");
 
-    // Subscribe to execution progress
     const execution$ = executionService.executeWorkflow(
       workflow,
       { input: "test-input" },
@@ -192,7 +146,7 @@ async function runExecutionExample() {
     // Track the execution ID for later reference
     let executionId: string;
 
-    // First, setup progress monitoring
+    // Setup progress monitoring
     execution$.subscribe({
       next: (record: any) => {
         executionId = record.id;
@@ -220,6 +174,10 @@ async function runExecutionExample() {
         // Monitor events
         executionService.getExecutionEvents(record.id).subscribe({
           next: (event) => {
+            console.log(
+              "executionService.getExecutionEvents",
+              JSON.stringify(event, null, 2),
+            );
             if (event.branchId) {
               console.log(
                 `Branch event: ${event.type} - Branch: ${event.branchId}`,
@@ -267,8 +225,6 @@ async function runExecutionExample() {
     console.log("\n2. Listing executions");
     const executions = await executionService.listExecutions({
       limit: 10,
-      //   sortBy: 'createdAt',
-      //   sortDirection: 'desc'
     });
 
     console.log(`Found ${executions.length} executions:`);
@@ -328,59 +284,18 @@ async function runExecutionExample() {
       console.error("Error getting metrics:", err);
     }
 
-    // Example 6: Get execution by ID
-    console.log("\n6. Getting execution by ID");
-    const execution = await executionService.getExecution(executions[0].id);
-    if (!execution) {
-      console.log("Execution not found");
-      return;
-    }
-    console.log("Execution details:", {
-      id: execution.id,
-      status: execution.status,
-      startedAt: execution.startedAt,
-      finishedAt: execution.finishedAt,
-      tokenUsage: execution.tokenUsage?.total || 0,
-    });
-    // Use the confirmed executions[0].id instead of potentially undefined executionId
-    const currentExecutionId = executions[0].id;
-    // Get all branches
-    const branches = await executionService.listBranches(currentExecutionId);
-    console.log(`Total branches: ${branches.length}`);
+    console.log("\nExecution Example Completed");
 
-    // Display branch results
-    for (const branch of branches) {
-      console.log(
-        `Branch: ${branch.name} (${branch.id}), Status: ${branch.status}`,
-      );
-    }
-
-    // Filter completed branches
-    const completedBranches = await executionService.listBranches(
-      currentExecutionId,
-      {
-        status: [BranchStatus.COMPLETED],
-      },
-    );
-    console.log(`Completed branches: ${completedBranches.length}`);
-
-    // Filter canceled branches
-    const canceledBranches = await executionService.listBranches(
-      currentExecutionId,
-      {
-        status: [BranchStatus.CANCELED],
-      },
-    );
-    console.log(`Canceled branches: ${canceledBranches.length}`);
+    // Close NestJS application
+    await app.close();
   } catch (error) {
     console.error("Error in execution example:", error);
+    // Ensure NestJS application is closed on error
+    await app.close();
   }
-
-  console.log("\nExecution Example Completed");
 }
 
 // Run the example
-runExecutionExample().catch(console.error);
+runNestExecutionExample().catch(console.error);
 
-// Export for import in other files
-export { runExecutionExample };
+export { runNestExecutionExample };

@@ -15,8 +15,8 @@ import {
   BranchEvent,
   BranchStatus,
 } from "../models/execution.types";
-import { Workflow } from "@delab/core/types/workflow.types";
-import { Injectable } from "@delab/core/di";
+import { Workflow } from "@packages/core/types/workflow.types";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class ExecutionMonitorService {

@@ -11,10 +11,11 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
-} from "@delab/core/types/plugin.types";
+  PluginMetadata,
+} from "@packages/core/types/plugin.types";
 import axios from "axios";
-import { Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 export interface ReasoningResult {
   reasoning: string;
@@ -27,12 +28,13 @@ export interface ReasoningResult {
 export class ReasoningPlugin implements NodePlugin {
   logger = new Logger(ReasoningPlugin.name);
   // Plugin metadata
-  id = "reasoning-plugin";
-  name = "LLM Reasoning";
-  version = "1.0.0";
-  description = "Performs reasoning using language models";
+  metadata: PluginMetadata = {
+    id: "reasoning-plugin",
+    name: "LLM Reasoning",
+    version: "1.0.0",
+    description: "Performs reasoning using language models",
+  };
   nodeType = "reasoning";
-
   // Schema definitions
   inputSchema: JSONSchema = {
     type: "object",

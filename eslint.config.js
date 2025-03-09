@@ -1,9 +1,8 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-
+const pluginJs = require("@eslint/js");
+const tseslint = require("typescript-eslint");
+const globals = require("globals");
 /** @type {import('eslint').Linter.Config[]} */
-export default [
+module.exports = [
   { ignores: ["node_modules", "dist"] },
   { files: ["**/*.{js,mjs,cjs,ts}"] },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
@@ -13,6 +12,11 @@ export default [
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ];

@@ -45,11 +45,7 @@ export interface JSONSchema {
 // Base Plugin interface
 export interface Plugin {
   // Metadata
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-
+  metadata: PluginMetadata;
   // Lifecycle methods
   initialize(context: PluginContext): Promise<void>;
   activate(): Promise<void>;

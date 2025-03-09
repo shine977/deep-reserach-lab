@@ -11,18 +11,21 @@ import {
   PluginContext,
   ExecutionContext,
   JSONSchema,
+  PluginMetadata,
 } from "../../core/types/plugin.types";
-import { Injectable } from "@delab/core/di";
-import { Logger } from "@delab/shared";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "@packages/shared";
 
 @Injectable()
 export class BranchPlugin implements NodePlugin {
   logger = new Logger(BranchPlugin.name);
   // Plugin metadata
-  id = "branch-plugin";
-  name = "Conditional Branch";
-  version = "1.0.0";
-  description = "Evaluates conditions and directs workflow execution flow";
+  metadata: PluginMetadata = {
+    id: "branch-plugin",
+    name: "Conditional Branch",
+    version: "1.0.0",
+    description: "Evaluates conditions and directs workflow execution flow",
+  };
   nodeType = "branch"; // This is important - matches the node type in workflow definition
 
   // Schema definitions
