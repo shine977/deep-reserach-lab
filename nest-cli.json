@@ -1,0 +1,11 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "./packages",
+  "compilerOptions": {
+    "webpack": true
+
+  },
+  "projects": {
+    
+  }
+}

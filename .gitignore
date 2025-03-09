@@ -33,6 +33,7 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+.idea
 
 # Testing
 coverage/

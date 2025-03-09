@@ -1,0 +1,8 @@
+{
+  "name": "@delab/api",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  }
+}

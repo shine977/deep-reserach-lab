@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-      "baseUrl": ".",
-      "paths": {
-        "@deep-research-lab/*": ["src/*/index.ts"],
-        "@/*": ["src/*"]
-      }
-    }
-  }

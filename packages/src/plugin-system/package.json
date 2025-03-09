@@ -1,0 +1,9 @@
+{
+  "name": "@delab/plugin-system",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "dependencies": {
+    "@delab/core": "workspace:*",
+    "rxjs": "^7.8.1"
+  }
+}
